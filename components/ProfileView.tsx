@@ -1,40 +1,35 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { saveUserProfile } from '../services/apiService';
 
 interface ProfileViewProps {
   userImages: string[];
 }
 
 export const ProfileView: React.FC<ProfileViewProps> = ({ userImages }) => {
-  const handleSettings = () => {
-    // Real Local Backup feature
-    const backupData = {
-      appName: "Amantes.com",
-      timestamp: new Date().toISOString(),
-      user: {
-        name: "Maria Eduarda",
-        handle: "@mariaeduarda",
-        stats: {
-          videos: 142,
-          followers: 12400,
-          crisex: 45230
-        }
+  const [saving, setSaving] = useState(false);
+
+  const handleSettings = async () => {
+    setSaving(true);
+    // Dados que seriam enviados para o DynamoDB via Lambda
+    const userData = {
+      userId: "user_123", // Em um app real, viria da autenticação
+      name: "Maria Eduarda",
+      stats: {
+        videos: 142,
+        followers: 12400,
+        crisex: 45230
       },
-      generatedImages: userImages,
-      // Add other mock data logic here if needed for restoration
+      lastBackup: new Date().toISOString()
     };
 
-    const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `amantes-backup-${new Date().getTime()}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-
-    alert("Arquivo de backup baixado com sucesso! Guarde este arquivo em segurança.");
+    try {
+        await saveUserProfile(userData);
+        alert("Dados sincronizados com a nuvem (AWS DynamoDB) com sucesso!");
+    } catch (e) {
+        alert("Erro ao salvar na nuvem.");
+    } finally {
+        setSaving(false);
+    }
   };
 
   return (
@@ -44,13 +39,17 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ userImages }) => {
         <h1 className="text-xl font-bold text-white">Perfil</h1>
         <button 
             onClick={handleSettings}
-            className="text-zinc-400 hover:text-white transition-colors p-2 rounded-full hover:bg-zinc-800"
-            title="Baixar Backup dos Dados"
+            disabled={saving}
+            className="text-zinc-400 hover:text-white transition-colors p-2 rounded-full hover:bg-zinc-800 disabled:opacity-50"
+            title="Sincronizar com Nuvem"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-          </svg>
+          {saving ? (
+             <span className="block w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+          ) : (
+             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+             </svg>
+          )}
         </button>
       </div>
 

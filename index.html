@@ -3,8 +3,20 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Amantes.com - A creative workspace powered by Gemini." />
     <title>Amantes.com</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      // --- POLYFILLS CRÍTICOS PARA AWS AMPLIFY ---
+      // O Amplify SDK requer 'global' e 'process' definidos no objeto window
+      if (typeof global === 'undefined') {
+        window.global = window;
+      }
+      window.process = {
+        env: { DEBUG: undefined },
+      };
+      var exports = {};
+    </script>
     <style>
       /* Custom scrollbar for webkit */
       ::-webkit-scrollbar {
@@ -28,7 +40,12 @@
     "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
     "react/": "https://aistudiocdn.com/react@^19.2.0/",
     "react": "https://aistudiocdn.com/react@^19.2.0",
-    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.30.0"
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.30.0",
+    "path": "https://aistudiocdn.com/path@^0.12.7",
+    "vite": "https://aistudiocdn.com/vite@^7.2.6",
+    "@vitejs/plugin-react": "https://aistudiocdn.com/@vitejs/plugin-react@^5.1.1",
+    "aws-amplify/": "https://aistudiocdn.com/aws-amplify@^6.15.8/",
+    "aws-amplify": "https://aistudiocdn.com/aws-amplify@^6.15.8"
   }
 }
 </script>

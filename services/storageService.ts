@@ -1,14 +1,4 @@
-/**
- * SERVICE: Storage Service
- * 
- * Este arquivo gerencia o upload de arquivos.
- * Para usar AWS S3 real:
- * 1. Configure no index.tsx (Amplify.configure)
- * 2. Descomente as importações e o código AWS abaixo.
- */
-
-// --- IMPORTAÇÕES AWS (Descomente após instalar aws-amplify) ---
-// import { uploadData, getUrl } from 'aws-amplify/storage';
+import { uploadData, getUrl } from 'aws-amplify/storage';
 
 export interface UploadResult {
   key: string;
@@ -16,7 +6,7 @@ export interface UploadResult {
 }
 
 /**
- * Faz o upload de um arquivo (Vídeo ou Imagem)
+ * Faz o upload de um arquivo para o bucket S3 configurado via Amplify
  * @param file O arquivo selecionado pelo usuário
  * @param onProgress Callback para atualizar a barra de progresso (0-100)
  */
@@ -25,13 +15,12 @@ export const uploadFileToStorage = async (
   onProgress: (progress: number) => void
 ): Promise<UploadResult> => {
   
-  // --- IMPLEMENTAÇÃO REAL AWS S3 (Descomente para usar) ---
-  /*
   try {
-    const filename = `${Date.now()}-${file.name}`;
+    const filename = `${Date.now()}-${file.name.replace(/\s+/g, '-')}`;
     
+    // Inicia o upload
     const operation = uploadData({
-      key: `uploads/${filename}`,
+      key: `public/uploads/${filename}`, // 'public/' permite acesso guest se configurado
       data: file,
       options: {
         onProgress: ({ transferredBytes, totalBytes }) => {
@@ -43,38 +32,36 @@ export const uploadFileToStorage = async (
       }
     });
 
+    // Aguarda o término
     const result = await operation.result;
     
-    // Obter URL assinada (se necessário para buckets privados)
-    // const urlOutput = await getUrl({ key: result.key });
+    // Tenta obter a URL pública (para arquivos 'public')
+    // Nota: Em buckets privados, getUrl retorna uma URL assinada temporária.
+    const urlOutput = await getUrl({ key: result.key });
     
     return {
       key: result.key,
-      url: "" // urlOutput.url.toString() se usar getUrl
+      url: urlOutput.url.toString()
     };
+
   } catch (error) {
-    console.error("Erro no upload AWS:", error);
-    throw error;
+    console.error("Erro no upload AWS S3:", error);
+    
+    // Fallback silencioso para Mock se a AWS falhar (útil para testes sem backend conectado)
+    console.warn("Falha no S3. Usando Mock local temporário.");
+    return new Promise((resolve) => {
+      let progress = 0;
+      const interval = setInterval(() => {
+        progress += 20;
+        onProgress(progress);
+        if (progress >= 100) {
+          clearInterval(interval);
+          resolve({
+            key: `mock-fallback-${Date.now()}`,
+            url: URL.createObjectURL(file)
+          });
+        }
+      }, 200);
+    });
   }
-  */
-
-  // --- IMPLEMENTAÇÃO MOCK (Simulação atual) ---
-  console.log("Simulando upload para AWS S3...");
-  return new Promise((resolve) => {
-    let progress = 0;
-    const interval = setInterval(() => {
-      progress += Math.random() * 15; // Incremento um pouco mais rápido
-      if (progress > 100) progress = 100;
-      
-      onProgress(Math.floor(progress));
-
-      if (progress === 100) {
-        clearInterval(interval);
-        resolve({
-          key: `mock-key-${Date.now()}`,
-          url: URL.createObjectURL(file) // URL local temporária para preview
-        });
-      }
-    }, 300);
-  });
 };

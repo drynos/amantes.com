@@ -1,52 +1,98 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { LiveView } from './LiveView';
 
-// Mock Data for the Feed
-const FEED_ITEMS = [
+// Base templates for generating infinite feed content
+const FEED_TEMPLATES = [
   {
-    id: 1,
     image: "https://images.unsplash.com/photo-1541963463532-d68292c34b19?ixlib=rb-1.2.1&auto=format&fit=crop&w=668&q=80",
     avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80",
     username: "@juliasilva",
     description: "Aprendendo novos passos de dança com a IA! 💃 #dancachallenge #amantes",
-    likes: "2456",
-    comments: "189",
+    likes: 2456,
+    comments: 189,
     isPro: true
   },
   {
-    id: 2,
     image: "https://images.unsplash.com/photo-1516483638261-f4dbaf036963?ixlib=rb-1.2.1&auto=format&fit=crop&w=668&q=80",
     avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80",
     username: "@marcos_travel",
     description: "Cinque Terre é surreal! 🇮🇹 #travel #italy",
-    likes: "12K",
-    comments: "432",
+    likes: 12000,
+    comments: 432,
     isPro: false
   },
   {
-    id: 3,
     image: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?ixlib=rb-1.2.1&auto=format&fit=crop&w=668&q=80",
     avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80",
     username: "@ana_tech",
     description: "Meu setup novo tá ficando pronto 🖥️ #setup #tech",
-    likes: "8.5K",
-    comments: "95",
+    likes: 8500,
+    comments: 95,
     isPro: true
   },
   {
-    id: 4,
     image: "https://images.unsplash.com/photo-1517849845537-4d257902454a?ixlib=rb-1.2.1&auto=format&fit=crop&w=668&q=80",
     avatar: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80",
     username: "@dog_lover",
     description: "Dia de parque com o melhor amigo 🐶 #dog #pet",
-    likes: "3.2K",
-    comments: "210",
+    likes: 3200,
+    comments: 210,
     isPro: false
   }
 ];
 
+// Helper to format large numbers (e.g., 12000 -> 12K)
+const formatNumber = (num: number) => {
+  if (num >= 1000) {
+    return (num / 1000).toFixed(1) + 'K';
+  }
+  return num.toString();
+};
+
+const generateFeedItems = (count: number, startIndex: number) => {
+  return Array.from({ length: count }).map((_, i) => {
+    const template = FEED_TEMPLATES[(startIndex + i) % FEED_TEMPLATES.length];
+    // Add some variation so duplicates aren't identical
+    const variation = Math.floor(Math.random() * 1000);
+    return {
+      ...template,
+      id: `feed-${startIndex + i}-${Date.now()}`,
+      likes: template.likes + variation,
+      comments: template.comments + Math.floor(variation / 10),
+      // Append ID to image URL to avoid caching identical images if needed, or keep same
+      image: `${template.image}&v=${startIndex + i}`
+    };
+  });
+};
+
 export const FeedView: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'FOR_YOU' | 'FOLLOWING' | 'LIVES'>('FOR_YOU');
+  
+  // Initialize with 4 items
+  const [items, setItems] = useState(() => generateFeedItems(4, 0));
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+
+  // Infinite Scroll Handler
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    if (activeTab === 'LIVES') return;
+
+    const { scrollTop, clientHeight, scrollHeight } = e.currentTarget;
+    const threshold = clientHeight * 1.5; // Load more when 1.5 screens away from bottom
+
+    if (scrollHeight - scrollTop <= clientHeight + threshold && !isLoadingMore) {
+      loadMoreItems();
+    }
+  };
+
+  const loadMoreItems = async () => {
+    setIsLoadingMore(true);
+    // Simulate network delay
+    setTimeout(() => {
+      const newItems = generateFeedItems(4, items.length);
+      setItems(prev => [...prev, ...newItems]);
+      setIsLoadingMore(false);
+    }, 1000);
+  };
 
   return (
     <div className="h-full relative bg-black">
@@ -85,8 +131,11 @@ export const FeedView: React.FC = () => {
          {activeTab === 'LIVES' ? (
            <LiveView />
          ) : (
-           <div className="h-full w-full overflow-y-scroll snap-y snap-mandatory scrollbar-hide">
-             {FEED_ITEMS.map((item, index) => (
+           <div 
+            className="h-full w-full overflow-y-scroll snap-y snap-mandatory scrollbar-hide"
+            onScroll={handleScroll}
+           >
+             {items.map((item, index) => (
                 <div key={item.id} className="h-full w-full relative bg-zinc-900 snap-start shrink-0">
                     {/* Background Image with Lazy Loading Strategy */}
                     <div className="absolute inset-0 bg-zinc-900">
@@ -123,7 +172,7 @@ export const FeedView: React.FC = () => {
                                 <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
                             </svg>
                         </button>
-                        <span className="text-white text-xs font-bold shadow-black drop-shadow-md">{item.likes}</span>
+                        <span className="text-white text-xs font-bold shadow-black drop-shadow-md">{formatNumber(item.likes)}</span>
                         </div>
 
                         <div className="flex flex-col items-center space-y-1">
@@ -132,7 +181,7 @@ export const FeedView: React.FC = () => {
                                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
                             </svg>
                         </button>
-                        <span className="text-white text-xs font-bold shadow-black drop-shadow-md">{item.comments}</span>
+                        <span className="text-white text-xs font-bold shadow-black drop-shadow-md">{formatNumber(item.comments)}</span>
                         </div>
 
                         <div className="flex flex-col items-center space-y-1">
@@ -175,6 +224,14 @@ export const FeedView: React.FC = () => {
                     </div>
                 </div>
              ))}
+             {isLoadingMore && (
+               <div className="h-full w-full flex items-center justify-center bg-zinc-900 snap-start shrink-0">
+                  <div className="flex flex-col items-center space-y-2">
+                    <div className="w-8 h-8 border-4 border-pink-500 border-t-transparent rounded-full animate-spin"></div>
+                    <span className="text-zinc-400 text-sm font-medium">Carregando mais...</span>
+                  </div>
+               </div>
+             )}
            </div>
          )}
        </div>

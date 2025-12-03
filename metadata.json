@@ -1,0 +1,7 @@
+{
+  "name": "Spark Studio",
+  "description": "A creative workspace powered by Gemini. Brainstorm with Live audio, generate high-fidelity images, and research with Grounding.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}

@@ -4,17 +4,23 @@ import { ImageGenView } from './components/ImageGenView';
 import { ProfileView } from './components/ProfileView';
 import { FeedView } from './components/FeedView';
 import { ShopView } from './components/ShopView';
-import { AppMode } from './types';
+import { AppMode, UserPost } from './types';
 
 function App() {
   const [mode, setMode] = useState<AppMode>(AppMode.HOME);
   const [userImages, setUserImages] = useState<string[]>([]);
+  const [userPosts, setUserPosts] = useState<UserPost[]>([]);
 
   // Function to add generated images to the user's profile
   const handleImageGenerated = (newImages: string[]) => {
     setUserImages(prev => [...newImages, ...prev]);
-    // Optionally switch to profile, but sticking to create flow is often better UX for tools
-    // setMode(AppMode.PROFILE); 
+  };
+
+  // Function to add created video posts to the user's profile
+  const handlePostCreated = (post: UserPost) => {
+    setUserPosts(prev => [post, ...prev]);
+    // Optional: Switch to profile to see the new post
+    // setMode(AppMode.PROFILE);
   };
 
   const NavItem = ({ target, icon, label, isAction = false }: { target: AppMode; icon: React.ReactNode; label?: string; isAction?: boolean }) => {
@@ -50,12 +56,22 @@ function App() {
           {/* PACKS / SHOP VIEW */}
           {mode === AppMode.SHOP && <ShopView />}
 
-          {mode === AppMode.CREATE && <ImageGenView onImageGenerated={handleImageGenerated} />}
+          {mode === AppMode.CREATE && (
+            <ImageGenView 
+              onImageGenerated={handleImageGenerated} 
+              onPostCreated={handlePostCreated}
+            />
+          )}
           
           {/* MESSAGES VIEW */}
           {mode === AppMode.MESSAGES && <ChatView />}
           
-          {mode === AppMode.PROFILE && <ProfileView userImages={userImages} />}
+          {mode === AppMode.PROFILE && (
+            <ProfileView 
+              userImages={userImages} 
+              userPosts={userPosts}
+            />
+          )}
       </main>
 
       {/* Bottom Navigation */}

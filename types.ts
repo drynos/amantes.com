@@ -21,6 +21,17 @@ export enum AppMode {
   PROFILE = 'PROFILE'
 }
 
+export interface UserPost {
+  id: string;
+  title: string;
+  description: string;
+  videoUrl: string;
+  thumbnail?: string;
+  isPro: boolean;
+  price?: string;
+  likes: number;
+}
+
 export interface ChatMessage {
   id: string;
   role: 'user' | 'model';
@@ -58,4 +69,14 @@ export interface FeedItem {
   likes: number;
   comments: number;
   description: string;
+}
+
+export interface ProfileViewProps {
+  userImages: string[];
+  userPosts: UserPost[];
+}
+
+export interface ImageGenViewProps {
+  onImageGenerated: (images: string[]) => void;
+  onPostCreated: (post: UserPost) => void;
 }

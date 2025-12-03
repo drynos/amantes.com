@@ -1,16 +1,13 @@
 import React, { useState } from 'react';
 import { generateImage } from '../services/geminiService';
 import { uploadFileToStorage } from '../services/storageService';
-
-interface ImageGenViewProps {
-  onImageGenerated: (images: string[]) => void;
-}
+import { ImageGenViewProps, UserPost } from '../types';
 
 type CreateTab = 'POST' | 'PACK' | 'LIVE';
 type PostMode = 'PUBLIC' | 'SELL';
 type LiveMode = 'PUBLIC' | 'PRIVATE';
 
-export const ImageGenView: React.FC<ImageGenViewProps> = ({ onImageGenerated }) => {
+export const ImageGenView: React.FC<ImageGenViewProps> = ({ onImageGenerated, onPostCreated }) => {
   const [activeTab, setActiveTab] = useState<CreateTab>('POST');
   
   // Post/Reels State
@@ -51,9 +48,27 @@ export const ImageGenView: React.FC<ImageGenViewProps> = ({ onImageGenerated }) 
 
           console.log("Upload concluído:", result);
           
+          // Construct the new post object
+          const newPost: UserPost = {
+            id: `post-${Date.now()}`,
+            title: videoTitle,
+            description: videoDesc,
+            videoUrl: result.url,
+            // For now, use a placeholder or derive thumbnail if possible. 
+            // In a real app, Lambda triggers would generate a thumbnail.
+            thumbnail: 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?q=80&w=1000&auto=format&fit=crop',
+            isPro: postMode === 'SELL',
+            price: postMode === 'SELL' ? videoPrice : undefined,
+            likes: 0
+          };
+
           // Delay pequeno para UX (para ver o 100%)
           setTimeout(() => {
             setUploading(false);
+            
+            // Notify parent
+            onPostCreated(newPost);
+
             alert(`Reel "${videoTitle}" enviado com sucesso! ${postMode === 'SELL' ? `Valor: ${videoPrice} PROTO` : 'Modo Público'}`);
             
             // Reset fields

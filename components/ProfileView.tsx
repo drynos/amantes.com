@@ -1,11 +1,8 @@
 import React, { useState } from 'react';
 import { saveUserProfile } from '../services/apiService';
+import { ProfileViewProps } from '../types';
 
-interface ProfileViewProps {
-  userImages: string[];
-}
-
-export const ProfileView: React.FC<ProfileViewProps> = ({ userImages }) => {
+export const ProfileView: React.FC<ProfileViewProps> = ({ userImages, userPosts }) => {
   const [saving, setSaving] = useState(false);
 
   const handleSettings = async () => {
@@ -15,7 +12,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ userImages }) => {
       userId: "user_123", // Em um app real, viria da autenticação
       name: "Maria Eduarda",
       stats: {
-        videos: 142,
+        videos: 142 + userPosts.length,
         followers: 12400,
         crisex: 45230
       },
@@ -81,7 +78,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ userImages }) => {
         <div className="flex justify-between px-2 mb-6 border-t border-b border-zinc-800 py-4">
           <div className="text-center">
             <p className="flex items-center justify-center text-white font-bold space-x-1">
-                <span className="text-pink-500">📹</span> <span>142</span>
+                <span className="text-pink-500">📹</span> <span>{142 + userPosts.length}</span>
             </p>
             <p className="text-[10px] text-zinc-500 uppercase tracking-wider mt-1">Videos</p>
           </div>
@@ -148,7 +145,28 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ userImages }) => {
       <div className="mt-4 px-4">
         <h3 className="text-white font-bold mb-4">Meus Vídeos</h3>
         <div className="grid grid-cols-3 gap-2">
-            {/* User Generated Images First */}
+            
+            {/* Created Video Posts */}
+            {userPosts.map((post) => (
+                <div key={post.id} className="aspect-[3/4] bg-zinc-900 rounded-lg overflow-hidden relative border border-zinc-800 group">
+                    {/* In a real app we would use post.thumbnail or generate one */}
+                    <img src={post.thumbnail || 'https://via.placeholder.com/150'} alt={post.title} className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-black/30 group-hover:bg-transparent transition-colors"></div>
+                    
+                    {/* Status Icons */}
+                    {post.isPro && (
+                        <div className="absolute top-1 right-1 bg-pink-600/90 text-white text-[8px] font-bold px-1.5 py-0.5 rounded">
+                            {post.price} 💎
+                        </div>
+                    )}
+
+                    <div className="absolute bottom-1 left-1.5 right-1">
+                        <p className="text-white text-[10px] font-bold truncate shadow-black drop-shadow-md">{post.title}</p>
+                    </div>
+                </div>
+            ))}
+
+            {/* User Generated Images */}
             {userImages.map((img, idx) => (
                 <div key={`gen-${idx}`} className="aspect-[3/4] bg-zinc-900 rounded-lg overflow-hidden relative border border-zinc-800 group">
                     <img src={img} alt="Generated" className="w-full h-full object-cover" />
